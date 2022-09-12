@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-## Running a project folder with several files
+# Running a project folder with several files
 
 Suppose you have a folder with several .v files in it, where one of them
 contains your `main()` function, and the other files have other helper
