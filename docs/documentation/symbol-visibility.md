@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 # Symbol visibility
@@ -13,8 +13,9 @@ fn private_function() {
 ```
 
 Functions are private (not exported) by default.
-To allow other modules to use them, prepend `pub`. The same applies
-to constants and types.
+To allow other [modules](./module-imports) to use them, prepend `pub`. The same applies
+to [structs](./structs), [constants](./constants) and [types](./type-declarations).
 
 Note: `pub` can only be used from a named module.
 For information about creating a module, see [Modules](./modules).
+

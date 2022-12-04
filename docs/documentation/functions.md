@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 # Functions
@@ -9,11 +9,9 @@ fn main() {
 	println(add(77, 33))
 	println(sub(100, 50))
 }
-
 fn add(x int, y int) int {
 	return x + y
 }
-
 fn sub(x int, y int) int {
 	return x - y
 }
@@ -37,7 +35,6 @@ or thinking about the order of files and declarations.
 fn foo() (int, int) {
 	return 2, 3
 }
-
 a, b := foo()
 println(a) // 2
 println(b) // 3

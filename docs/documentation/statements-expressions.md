@@ -1,5 +1,5 @@
 ---
-sidebar_position: 10
+sidebar_position: 11
 ---
 
 # Statements & expressions
@@ -10,11 +10,11 @@ sidebar_position: 10
 a := 10
 b := 20
 if a < b {
-	println('$a < $b')
+	println('${a} < ${b}')
 } else if a > b {
-	println('$a > $b')
+	println('${a} > ${b}')
 } else {
-	println('$a == $b')
+	println('${a} == ${b}')
 }
 ```
 
@@ -39,13 +39,10 @@ You can do it either in an `if`:
 struct Abc {
 	val string
 }
-
 struct Xyz {
 	foo string
 }
-
 type Alphabet = Abc | Xyz
-
 x := Alphabet(Abc{'test'}) // sum type
 if x is Abc {
 	// x is automatically casted to Abc and can be used here
@@ -74,17 +71,13 @@ This works also with struct fields:
 struct MyStruct {
 	x int
 }
-
 struct MyStruct2 {
 	y string
 }
-
 type MySumType = MyStruct | MyStruct2
-
 struct Abc {
 	bar MySumType
 }
-
 x := Abc{
 	bar: MyStruct{123} // MyStruct will be converted to MySumType type automatically
 }
@@ -128,6 +121,114 @@ match mut x {
 }
 ```
 
+## Match
+
+```v
+os := 'windows'
+print('V is running on ')
+match os {
+	'darwin' { println('macOS.') }
+	'linux' { println('Linux.') }
+	else { println(os) }
+}
+```
+
+A match statement is a shorter way to write a sequence of `if - else` statements.
+When a matching branch is found, the following statement block will be run.
+The else branch will be run when no other branches match.
+
+```v
+number := 2
+s := match number {
+	1 { 'one' }
+	2 { 'two' }
+	else { 'many' }
+}
+```
+
+A match statement can also to be used as an `if - else if - else` alternative:
+
+```v
+match true {
+	2 > 4 { println('if') }
+	3 == 4 { println('else if') }
+	2 == 2 { println('else if2') }
+	else { println('else') }
+}
+// 'else if2' should be printed
+```
+
+or as an `unless` alternative: [unless Ruby](https://www.tutorialspoint.com/ruby/ruby_if_else.htm)
+
+```v
+match false {
+	2 > 4 { println('if') }
+	3 == 4 { println('else if') }
+	2 == 2 { println('else if2') }
+	else { println('else') }
+}
+// 'if' should be printed
+```
+
+A match expression returns the value of the final expression from the matching branch.
+
+```v
+enum Color {
+	red
+	blue
+	green
+}
+fn is_red_or_blue(c Color) bool {
+	return match c {
+		.red, .blue { true } // comma can be used to test multiple values
+		.green { false }
+	}
+}
+```
+
+A match statement can also be used to branch on the variants of an `enum`
+by using the shorthand `.variant_here` syntax. An `else` branch is not allowed
+when all the branches are exhaustive.
+
+```v
+c := `v`
+typ := match c {
+	`0`...`9` { 'digit' }
+	`A`...`Z` { 'uppercase' }
+	`a`...`z` { 'lowercase' }
+	else { 'other' }
+}
+println(typ)
+// 'lowercase'
+```
+
+You can also use ranges as `match` patterns. If the value falls within the range
+of a branch, that branch will be executed.
+
+Note that the ranges use `...` (three dots) rather than `..` (two dots). This is
+because the range is *inclusive* of the last element, rather than exclusive
+(as `..` ranges are). Using `..` in a match branch will throw an error.
+
+```v
+const start = 1
+const end = 10
+c := 2
+num := match c {
+	start...end {
+		1000
+	}
+	else {
+		0
+	}
+}
+println(num)
+// 1000
+```
+
+Constants can also be used in the range branch expressions.
+
+Note: `match` as an expression is not usable in `for` loop and `if` statements.
+
 ## In operator
 
 `in` allows to check whether an array or a map contains an element.
@@ -154,11 +255,9 @@ enum Token {
 	div
 	mult
 }
-
 struct Parser {
 	token Token
 }
-
 parser := Parser{}
 if parser.token == .plus || parser.token == .minus || parser.token == .div || parser.token == .mult {
 	// ...
@@ -189,7 +288,7 @@ for num in numbers {
 }
 names := ['Sam', 'Peter']
 for i, name in names {
-	println('$i) $name')
+	println('${i}) ${name}')
 	// Output: 0) Sam
 	//         1) Peter
 }
@@ -211,6 +310,7 @@ println(numbers) // [1, 2, 3]
 When an identifier is just a single underscore, it is ignored.
 
 #### Custom iterators
+
 Types that implement a `next` method returning an `Option` can be iterated
 with a `for` loop.
 
@@ -220,17 +320,15 @@ struct SquareIterator {
 mut:
 	idx int
 }
-
 fn (mut iter SquareIterator) next() ?int {
 	if iter.idx >= iter.arr.len {
-		return error('')
+		return none
 	}
 	defer {
 		iter.idx++
 	}
 	return iter.arr[iter.idx] * iter.arr[iter.idx]
 }
-
 nums := [1, 2, 3, 4, 5]
 iter := SquareIterator{
 	arr: nums
@@ -257,7 +355,7 @@ m := {
 	'two': 2
 }
 for key, value in m {
-	println('$key -> $value')
+	println('${key} -> ${value}')
 	// Output: one -> 1
 	//         two -> 2
 }
@@ -370,97 +468,6 @@ The above code prints:
 7
 ```
 
-## Match
-
-```v
-os := 'windows'
-print('V is running on ')
-match os {
-	'darwin' { println('macOS.') }
-	'linux' { println('Linux.') }
-	else { println(os) }
-}
-```
-
-A match statement is a shorter way to write a sequence of `if - else` statements.
-When a matching branch is found, the following statement block will be run.
-The else branch will be run when no other branches match.
-
-```v
-number := 2
-s := match number {
-	1 { 'one' }
-	2 { 'two' }
-	else { 'many' }
-}
-```
-
-A match statement can also to be used as an `if - else if - else` alternative:
-
-```v
-match true {
-	2 > 4 { println('if') }
-	3 == 4 { println('else if') }
-	2 == 2 { println('else if2') }
-	else { println('else') }
-}
-// 'else if2' should be printed
-```
-
-or as an `unless` alternative: [unless Ruby](https://www.tutorialspoint.com/ruby/ruby_if_else.htm)
-
-```v
-match false {
-	2 > 4 { println('if') }
-	3 == 4 { println('else if') }
-	2 == 2 { println('else if2') }
-	else { println('else') }
-}
-// 'if' should be printed
-```
-
-A match expression returns the value of the final expression from the matching branch.
-
-```v
-enum Color {
-	red
-	blue
-	green
-}
-
-fn is_red_or_blue(c Color) bool {
-	return match c {
-		.red, .blue { true } // comma can be used to test multiple values
-		.green { false }
-	}
-}
-```
-
-A match statement can also be used to branch on the variants of an `enum`
-by using the shorthand `.variant_here` syntax. An `else` branch is not allowed
-when all the branches are exhaustive.
-
-```v
-c := `v`
-typ := match c {
-	`0`...`9` { 'digit' }
-	`A`...`Z` { 'uppercase' }
-	`a`...`z` { 'lowercase' }
-	else { 'other' }
-}
-println(typ)
-// 'lowercase'
-```
-
-You can also use ranges as `match` patterns. If the value falls within the range
-of a branch, that branch will be executed.
-
-Note that the ranges use `...` (three dots) rather than `..` (two dots). This is
-because the range is *inclusive* of the last element, rather than exclusive
-(as `..` ranges are). Using `..` in a match branch will throw an error.
-
-Note: `match` as an expression is not usable in `for` loop and `if` statements.
-
 ## Defer
 
 A defer statement defers the execution of a block of statements
@@ -468,7 +475,6 @@ until the surrounding function returns.
 
 ```v
 import os
-
 fn read_log() {
 	mut ok := false
 	mut f := os.open('log.txt') or { panic(err) }
@@ -490,16 +496,14 @@ expression is evaluated:
 
 ```v
 import os
-
 enum State {
 	normal
 	write_log
 	return_error
 }
-
 // write log file and return number of bytes written
-fn write_log(s State) ?int {
-	mut f := os.create('log.txt')?
+fn write_log(s State) !int {
+	mut f := os.create('log.txt')!
 	defer {
 		f.close()
 	}
@@ -512,17 +516,40 @@ fn write_log(s State) ?int {
 		// the file will be closed after the `error()` function
 		// has returned - so the error message will still report
 		// it as open
-		return error('nothing written; file open: $f.is_opened')
+		return error('nothing written; file open: ${f.is_opened}')
 	}
 	// the file will be closed here, too
 	return 0
 }
-
 fn main() {
 	n := write_log(.return_error) or {
-		println('Error: $err')
+		println('Error: ${err}')
 		0
 	}
-	println('$n bytes written')
+	println('${n} bytes written')
 }
 ```
+
+## Goto
+
+V allows unconditionally jumping to a label with `goto`. The label name must be contained
+within the same function as the `goto` statement. A program may `goto` a label outside
+or deeper than the current scope. `goto` allows jumping past variable initialization or
+jumping back to code that accesses memory that has already been freed, so it requires
+`unsafe`.
+
+```v ignore
+if x {
+	// ...
+	if y {
+		unsafe {
+			goto my_label
+		}
+	}
+	// ...
+}
+my_label:
+```
+`goto` should be avoided, particularly when `for` can be used instead.
+[Labelled break/continue](#labelled-break--continue) can be used to break out of
+a nested loop, and those do not risk violating memory-safety.

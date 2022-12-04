@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 8
 ---
 
 # Variables
@@ -23,10 +23,11 @@ the expression `T(v)` converts the value `v` to the
 type `T`.
 
 Unlike most other languages, V only allows defining variables in functions.
-Global (module level) variables are not allowed. There's no global state in V.
+By default V does not allow **global variables**. See more [details](../advanced/global-variables.md).
 
 For consistency across different code bases, all variable and function names
 must use the `snake_case` style, as opposed to type names, which must use `PascalCase`.
+
 
 ## Mutable variables
 
@@ -69,9 +70,9 @@ In this way, their values can be swapped without an intermediary variable.
 ```v
 mut a := 0
 mut b := 1
-println('$a, $b') // 0, 1
+println('${a}, ${b}') // 0, 1
 a, b = b, a
-println('$a, $b') // 1, 0
+println('${a}, ${b}') // 1, 0
 ```
 
 ## Declaration errors
@@ -98,7 +99,6 @@ You can shadow imported modules though, as it is very useful in some situations:
 ```v ignore
 import ui
 import gg
-
 fn draw(ctx &gg.Context) {
 	gg := ctx.parent.get_ui().gg
 	gg.draw_rect(10, 10, 100, 50)

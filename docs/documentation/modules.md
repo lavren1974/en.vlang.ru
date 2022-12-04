@@ -1,11 +1,15 @@
 ---
-sidebar_position: 17
+sidebar_position: 18
 ---
 
 # Modules
 
 Every file in the root of a folder is part of the same module.
 Simple programs don't need to specify module name, in which case it defaults to 'main'.
+
+See [symbol visibility](./symbol-visibility.md), [Access modifiers](#access-modifiers).
+
+## Create modules
 
 V is a very modular language. Creating reusable modules is encouraged and is
 quite easy to do.
@@ -20,7 +24,6 @@ vim mymodule/myfile.v
 ```v failcompile
 // myfile.v
 module mymodule
-
 // To export a function we have to use `pub`
 pub fn say_hi() {
 	println('hello from mymodule!')
@@ -31,7 +34,6 @@ You can now use `mymodule` in your code:
 
 ```v failcompile
 import mymodule
-
 fn main() {
 	mymodule.say_hi()
 }

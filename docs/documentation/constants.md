@@ -1,5 +1,5 @@
 ---
-sidebar_position: 15
+sidebar_position: 16
 ---
 
 # Constants
@@ -9,7 +9,6 @@ const (
 	pi    = 3.14
 	world = '世界'
 )
-
 println(pi)
 println(world)
 ```
@@ -31,7 +30,6 @@ struct Color {
 	g int
 	b int
 }
-
 fn rgb(r int, g int, b int) Color {
 	return Color{
 		r: r
@@ -39,7 +37,6 @@ fn rgb(r int, g int, b int) Color {
 		b: b
 	}
 }
-
 const (
 	numbers = [1, 2, 3]
 	red     = Color{
@@ -50,7 +47,6 @@ const (
 	// evaluate function call at compile-time*
 	blue = rgb(0, 0, 255)
 )
-
 println(numbers)
 println(red)
 println(blue)
@@ -64,9 +60,7 @@ Global variables are not normally allowed, so this can be really useful.
 Constants can be made public with `pub const`:
 ```v oksyntax
 module mymodule
-
 pub const golden_ratio = 1.61803
-
 fn calc() {
 	println(mymodule.golden_ratio)
 }
@@ -93,7 +87,6 @@ Many people prefer all caps consts: `TOP_CITIES`. This wouldn't work
 well in V, because consts are a lot more powerful than in other languages.
 They can represent complex structures, and this is used quite often since there
 are no globals:
-
 ```v oksyntax
 println('Top cities: ${top_cities.filter(.usa)}')
 ```

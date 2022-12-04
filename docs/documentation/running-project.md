@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 4
 ---
 
 # Running a project folder with several files
@@ -25,7 +25,6 @@ after your folder/project), and then it will execute the program with
 Your program can then use the CLI parameters like this:
 ```v
 import os
-
 println(os.args)
 ```
 NB: after a successful run, V will delete the generated executable.

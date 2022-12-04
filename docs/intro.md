@@ -18,6 +18,5 @@ Despite being simple, V gives the developer a lot of power.
 Anything you can do in other languages, you can do in V.
 
 <!-- 
-Commits on Sep 5, 2022
-90c2c5b8a4adc4d7de1dba952da9581f6d76f1ae 
+Commits 
 -->

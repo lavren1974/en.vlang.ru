@@ -1,21 +1,20 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 # Hello World
-
 
 ```v
 fn main() {
 	println('hello world')
 }
 ```
+
 Save this snippet into a file named `hello.v`. Now do: `v run hello.v`.
 
 > That is assuming you have symlinked your V with `v symlink`, as described
 [here](https://github.com/vlang/v/blob/master/README.md#symlinking).
 If you haven't yet, you have to type the path to V manually.
-
 Congratulations - you just wrote and executed your first V program!
 
 You can compile a program without execution with `v hello.v`.
@@ -39,3 +38,9 @@ This means that a "hello world" program in V is as simple as
 ```v
 println('hello world')
 ```
+
+Note: if you do not use explicitly `fn main() {}`, you need to make sure, that all your
+declarations, come before any variable assignment statements, or top level function calls,
+since V will consider everything after the first assignment/function call as part of your
+implicit main function.
+

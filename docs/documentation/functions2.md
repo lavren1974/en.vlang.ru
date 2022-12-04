@@ -1,10 +1,11 @@
 ---
-sidebar_position: 13
+sidebar_position: 14
 ---
 
 # Functions 2
 
 ## Immutable function args by default
+
 In V function arguments are immutable by default, and mutable args have to be
 marked on call.
 
@@ -28,11 +29,9 @@ struct User {
 mut:
 	is_registered bool
 }
-
 fn (mut u User) register() {
 	u.is_registered = true
 }
-
 mut user := User{}
 println(user.is_registered) // "false"
 user.register()
@@ -48,7 +47,6 @@ fn multiply_by_2(mut arr []int) {
 		arr[i] *= 2
 	}
 }
-
 mut nums := [1, 2, 3]
 multiply_by_2(mut nums)
 println(nums)
@@ -66,32 +64,6 @@ to reduce allocations and copying.
 For this reason V doesn't allow the modification of arguments with primitive types (e.g. integers).
 Only more complex types such as arrays and maps may be modified.
 
-### Struct update syntax
-
-V makes it easy to return a modified version of an object:
-
-```v
-struct User {
-	name          string
-	age           int
-	is_registered bool
-}
-
-fn register(u User) User {
-	return User{
-		...u
-		is_registered: true
-	}
-}
-
-mut user := User{
-	name: 'abc'
-	age: 23
-}
-user = register(user)
-println(user)
-```
-
 ## Variable number of arguments
 
 ```v
@@ -102,7 +74,6 @@ fn sum(a ...int) int {
 	}
 	return total
 }
-
 println(sum()) // 0
 println(sum(1)) // 1
 println(sum(2, 3)) // 5
@@ -119,15 +90,12 @@ println(sum(...b)) // output: 18
 fn sqr(n int) int {
 	return n * n
 }
-
 fn cube(n int) int {
 	return n * n * n
 }
-
 fn run(value int, op fn (int) int) int {
 	return op(value)
 }
-
 fn main() {
 	// Functions can be passed to other functions
 	println(run(5, sqr)) // "25"
@@ -191,7 +159,6 @@ fn new_counter() fn () int {
 		return i
 	}
 }
-
 c := new_counter()
 println(c()) // 1
 println(c()) // 2
@@ -208,8 +175,23 @@ mut ref := &i
 print_counter := fn [ref] () {
 	println(*ref)
 }
-
 print_counter() // 0
 i = 10
 print_counter() // 10
 ```
+
+## Parameter evaluation order
+
+The evaluation order of the parameters of function calls is *NOT* guaranteed.
+Take for example the following program:
+```v
+fn f(a1 int, a2 int, a3 int) {
+	dump(a1 + a2 + a3)
+}
+fn main() {
+	f(dump(100), dump(200), dump(300))
+}
+```
+V currently does not guarantee, that it will print 100, 200, 300 in that order.
+The only guarantee is that 600 (from the body of `f`), will be printed after all of them.
+That *may* change in V 1.0 .

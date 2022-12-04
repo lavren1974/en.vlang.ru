@@ -1,5 +1,5 @@
 ---
-sidebar_position: 11
+sidebar_position: 12
 ---
 
 # Structs
@@ -9,7 +9,6 @@ struct Point {
 	x int
 	y int
 }
-
 mut p := Point{
 	x: 10
 	y: 20
@@ -23,14 +22,13 @@ assert p.x == 10
 ## Heap structs
 
 Structs are allocated on the stack. To allocate a struct on the heap
-and get a reference to it, use the `&` prefix:
+and get a [reference](./references.md) to it, use the `&` prefix:
 
 ```v
 struct Point {
 	x int
 	y int
 }
-
 p := &Point{10, 10}
 // References have the same syntax for accessing fields
 println(p.x)
@@ -44,17 +42,14 @@ struct Foo {
 mut:
 	x int
 }
-
 fa := Foo{1}
 mut a := fa
 a.x = 2
 assert fa.x == 1
 assert a.x == 2
-
 // fb := Foo{ 1 }
 // mut b := &fb  // error: `fb` is immutable, cannot have a mutable reference to it
 // b.x = 2
-
 mut fc := Foo{1}
 mut c := &fc
 c.x = 2
@@ -78,6 +73,7 @@ struct Foo {
 
 All struct fields are zeroed by default during the creation of the struct.
 Array and map fields are allocated.
+In case of reference value, [see](#structs-with-reference-fields).
 
 It's also possible to define custom default values.
 
@@ -89,14 +85,15 @@ struct Foo {
 }
 ```
 
-You can mark a struct field with the `[required]` attribute, to tell V that
+You can mark a struct field with the `[required]` [attribute](#attributes), to tell V that
 that field must be initialized when creating an instance of that struct.
 
 This example will not compile, since the field `n` isn't explicitly initialized:
 ```v failcompile
 _ = Foo{}
 ```
-<!-- <a id='short-struct-initialization-syntax' /> -->
+
+<a id='short-struct-initialization-syntax' />
 
 ## Short struct literal syntax
 
@@ -105,7 +102,6 @@ struct Point {
 	x int
 	y int
 }
-
 mut p := Point{
 	x: 10
 	y: 20
@@ -124,7 +120,31 @@ println(points) // [Point{x: 10, y: 20}, Point{x: 20, y: 30}, Point{x: 40,y: 50}
 Omitting the struct name also works for returning a struct literal or passing one
 as a function argument.
 
-### Trailing struct literal arguments
+## Struct update syntax
+
+V makes it easy to return a modified version of an object:
+
+```v
+struct User {
+	name          string
+	age           int
+	is_registered bool
+}
+fn register(u User) User {
+	return User{
+		...u
+		is_registered: true
+	}
+}
+mut user := User{
+	name: 'abc'
+	age: 23
+}
+user = register(user)
+println(user)
+```
+
+## Trailing struct literal arguments
 
 V doesn't have default function arguments or named arguments, for that trailing struct
 literal syntax can be used instead:
@@ -137,13 +157,11 @@ struct ButtonConfig {
 	width       int = 70
 	height      int = 20
 }
-
 struct Button {
 	text   string
 	width  int
 	height int
 }
-
 fn new_button(c ButtonConfig) &Button {
 	return &Button{
 		width: c.width
@@ -151,7 +169,6 @@ fn new_button(c ButtonConfig) &Button {
 		text: c.text
 	}
 }
-
 button := new_button(text: 'Click me', width: 100)
 // the height is unset, so it's the default value
 assert button.height == 20
@@ -204,14 +221,12 @@ with a struct name.
 
 ```v
 struct Book {
-	author struct  {
+	author struct {
 		name string
 		age  int
 	}
-
 	title string
 }
-
 book := Book{
 	author: struct {
 		name: 'Samantha Black'
@@ -222,17 +237,56 @@ assert book.author.name == 'Samantha Black'
 assert book.author.age == 24
 ```
 
+## `[noinit]` structs
+
+V supports `[noinit]` structs, which are structs that cannot be initialised outside the module
+they are defined in. They are either meant to be used internally or they can be used externally
+through _factory functions_.
+
+For an example, consider the following source in a directory `sample`:
+
+```v oksyntax
+module sample
+[noinit]
+pub struct Information {
+pub:
+	data string
+}
+pub fn new_information(data string) !Information {
+	if data.len == 0 || data.len > 100 {
+		return error('data must be between 1 and 100 characters')
+	}
+	return Information{
+		data: data
+	}
+}
+```
+
+Note that `new_information` is a _factory_ function. Now when we want to use this struct
+outside the module:
+
+```v okfmt
+import sample
+fn main() {
+	// This doesn't work when the [noinit] attribute is present:
+	// info := sample.Information{
+	// 	data: 'Sample information.'
+	// }
+	// Use this instead:
+	info := sample.new_information('Sample information.')!
+	println(info)
+}
+```
+
 ## Methods
 
 ```v
 struct User {
 	age int
 }
-
 fn (u User) can_register() bool {
 	return u.age > 16
 }
-
 user := User{
 	age: 10
 }
@@ -262,11 +316,9 @@ mut:
 	width  int
 	height int
 }
-
 fn (s &Size) area() int {
 	return s.width * s.height
 }
-
 struct Button {
 	Size
 	title string
@@ -281,7 +333,6 @@ mut button := Button{
 	title: 'Click me'
 	height: 2
 }
-
 button.width = 3
 assert button.area() == 6
 assert button.Size.area() == 6
@@ -304,7 +355,7 @@ Unlike inheritance, you cannot type cast between structs and embedded structs
 
 If you need to access embedded structs directly, use an explicit reference like `button.Size`.
 
-Conceptually, embedded structs are similar to [mixins](https://en.wikipedia.org/wiki/Mixin)
+Conceptually, embedded structs are similar to [mixin](https://en.wikipedia.org/wiki/Mixin)s
 in OOP, *NOT* base classes.
 
 You can also initialize an embedded struct:

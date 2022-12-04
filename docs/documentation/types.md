@@ -1,5 +1,5 @@
 ---
-sidebar_position: 8
+sidebar_position: 9
 ---
 
 # Types
@@ -8,20 +8,13 @@ sidebar_position: 8
 
 ```v ignore
 bool
-
 string
-
 i8    i16  int  i64      i128 (soon)
 u8    u16  u32  u64      u128 (soon)
-
 rune // represents a Unicode code point
-
 f32 f64
-
 isize, usize // platform-dependent, the size is how many bytes it takes to reference any location in memory
-
-voidptr // this one is mostly used for C interoperability
-
+voidptr // this one is mostly used for [C interoperability](#v-and-c)
 any // similar to C's void* and Go's interface{}
 ```
 
@@ -70,19 +63,15 @@ name := 'Bob'
 assert name.len == 3       // will print 3
 assert name[0] == u8(66) // indexing gives a byte, u8(66) == `B`
 assert name[1..3] == 'ob'  // slicing gives a string 'ob'
-
 // escape codes
 windows_newline := '\r\n'      // escape special characters like in C
 assert windows_newline.len == 2
-
 // arbitrary bytes can be directly specified using `\x##` notation where `#` is
 // a hex digit aardvark_str := '\x61ardvark' assert aardvark_str == 'aardvark'
 assert '\xc0'[0] == u8(0xc0)
-
 // or using octal escape `\###` notation where `#` is an octal digit
 aardvark_str2 := '\141ardvark'
 assert aardvark_str2 == 'aardvark'
-
 // Unicode can be specified directly as `\u####` where # is a hex digit
 // and will be converted internally to its UTF-8 representation
 star_str := '\u2605' // ★
@@ -95,10 +84,8 @@ In V, a string is a read-only array of bytes. All Unicode characters are encoded
 ```v
 s := 'hello 🌎' // emoji takes 4 bytes
 assert s.len == 10
-
 arr := s.bytes() // convert `string` to `[]u8`
 assert arr.len == 10
-
 s2 := arr.bytestr() // convert `[]byte` to `string`
 assert s2 == s
 ```
@@ -111,7 +98,6 @@ s[0] = `H` // not allowed
 ```
 
 > error: cannot assign to `s[i]` since V strings are immutable
-
 Note that indexing a string will produce a `byte`, not a `rune` nor another `string`. Indexes
 correspond to _bytes_ in the string, not Unicode code points. If you want to convert the `byte` to a
 `string`, use the `.ascii_str()` method on the `byte`:
@@ -137,7 +123,6 @@ Strings can be easily converted to integers:
 ```v
 s := '42'
 n := s.int() // 42
-
 // all int literals are supported
 assert '0xc3'.int() == 195
 assert '0o10'.int() == 8
@@ -148,17 +133,17 @@ assert '-0b1111_0000_1010'.int() == -3850
 For more advanced `string` processing and conversions, refer to the
 [vlib/strconv](https://modules.vlang.io/strconv.html) module.
 
-## String interpolation
+### String interpolation
 
-Basic interpolation syntax is pretty simple - use `$` before a variable name. The variable will be
-converted to a string and embedded into the literal:
+Basic interpolation syntax is pretty simple - use `${` before a variable name and `}` after. The
+variable will be converted to a string and embedded into the literal:
 
 ```v
 name := 'Bob'
-println('Hello, $name!') // Hello, Bob!
+println('Hello, ${name}!') // Hello, Bob!
 ```
 
-It also works with fields: `'age = $user.age'`. If you need more complex expressions, use `${}`:
+It also works with fields: `'age = ${user.age}'`. You may also use more complex expressions:
 `'can register = ${user.age > 13}'`.
 
 Format specifiers similar to those in C's `printf()` are also supported. `f`, `g`, `x`, `o`, `b`,
@@ -210,11 +195,11 @@ println('[${int(x):010}]') // pad with zeros on the left => [0000000123]
 println('[${int(x):b}]') // output as binary => [1111011]
 println('[${int(x):o}]') // output as octal => [173]
 println('[${int(x):X}]') // output as uppercase hex => [7B]
-
 println('[${10.0000:.2}]') // remove insignificant 0s at the end => [10]
 println('[${10.0000:.2f}]') // do show the 0s at the end, even though they do not change the number => [10.00]
 ```
-## String operators
+
+### String operators
 
 ```v
 name := 'Bob'
@@ -234,7 +219,6 @@ println('age = ' + age) // not allowed
 ```
 
 > error: infix expr: cannot use `int` (right expression) as `string`
-
 We have to either convert `age` to a `string`:
 
 ```v
@@ -246,14 +230,18 @@ or use string interpolation (preferred):
 
 ```v
 age := 12
-println('age = $age')
+println('age = ${age}')
 ```
+
+See all methods of [string](https://modules.vlang.io/index.html#string)
+and related modules [strings](https://modules.vlang.io/strings.html),
+[strconv](https://modules.vlang.io/strconv.html).
+
 
 ## Runes
 
-A `rune` represents a single Unicode character and is an alias for `u32`. To denote them, use `
-(backticks) :
-
+A `rune` represents a single Unicode character and is an alias for `u32`.
+To denote them, use <code>`</code> (backticks) :
 ```v
 rocket := `🚀`
 ```
@@ -278,7 +266,6 @@ Hex, Unicode, and Octal escape sequences also work in a `rune` literal:
 assert `\x61` == `a`
 assert `\141` == `a`
 assert `\u0061` == `a`
-
 // multibyte literals work too
 assert `\u2605` == `★`
 assert `\u2605`.bytes() == [u8(0xe2), 0x98, 0x85]
@@ -371,7 +358,6 @@ mut nums := [1, 2, 3]
 println(nums) // `[1, 2, 3]`
 println(nums[0]) // `1`
 println(nums[1]) // `2`
-
 nums[1] = 5
 println(nums) // `[1, 5, 3]`
 ```
@@ -385,7 +371,6 @@ It can also append an entire array.
 mut nums := [1, 2, 3]
 nums << 4
 println(nums) // "[1, 2, 3, 4]"
-
 // append array
 nums << [5, 6, 7]
 println(nums) // "[1, 2, 3, 4, 5, 6, 7]"
@@ -397,7 +382,7 @@ names << 'Sam'
 // names << 10  <-- This will not compile. `names` is an array of strings.
 ```
 
-`val in array` returns true if the array contains `val`. See [`in` operator](./statements-expressions#in-operator).
+`val in array` returns true if the array contains `val`. See [`in` operator](#in-operator).
 
 ```v
 names := ['John', 'Peter', 'Sam']
@@ -421,7 +406,7 @@ nums = [] // The array is now empty
 println(nums.len) // "0"
 ```
 `data` is a field (of type `voidptr`) with the address of the first
-element. This is for low-level [`unsafe`](../advanced/memory-unsafe-code) code.
+element. This is for low-level [`unsafe`](#memory-unsafe-code) code.
 
 Note that the fields are read-only and can't be modified by the user.
 
@@ -450,7 +435,6 @@ capacity is not smaller than `len` (even if a smaller value is specified explici
 ```v
 arr := []int{len: 5, init: -1}
 // `arr == [-1, -1, -1, -1, -1]`, arr.cap == 5
-
 // Declare an empty array:
 users := []int{}
 ```
@@ -467,7 +451,7 @@ for i in 0 .. 1000 {
 	numbers << i
 }
 ```
-Note: The above code uses a [range `for`](./statements-expressions#range-for) statement.
+Note: The above code uses a [range `for`](#range-for) statement.
 
 You can initialize the array by accessing the `it` variable which gives
 the index as shown here:
@@ -475,7 +459,6 @@ the index as shown here:
 ```v
 count := []int{len: 4, init: it}
 assert count == [0, 1, 2, 3]
-
 mut square := []int{len: 6, init: it * it}
 // square == [0, 1, 4, 9, 16, 25]
 ```
@@ -504,6 +487,7 @@ An array can be of these types:
 | Reference    | `[]&f64`                             |
 | Shared       | `[]shared MyStructType`              |
 
+
 **Example Code:**
 
 This example uses [Structs](./structs.md) and [Sum Types](./type-declarations.md#sum-types) to create an array
@@ -514,14 +498,11 @@ struct Point {
 	x int
 	y int
 }
-
 struct Line {
 	p1 Point
 	p2 Point
 }
-
 type ObjectSumType = Line | Point
-
 mut object_list := []ObjectSumType{}
 object_list << Point{1, 1}
 object_list << Line{
@@ -633,6 +614,8 @@ There are further built-in methods for arrays:
 * `a.join(joiner)` concatenates an array of strings into one string
   using `joiner` string as a separator
 
+See all methods of [array](https://modules.vlang.io/index.html#array)
+
 See also [vlib/arrays](https://modules.vlang.io/arrays.html).
 
 #### Sorting Arrays
@@ -651,7 +634,6 @@ struct User {
 	age  int
 	name string
 }
-
 mut users := [User{21, 'Bob'}, User{20, 'Zarkon'}, User{25, 'Alice'}]
 users.sort(a.age < b.age) // sort by User.age int field
 users.sort(a.name > b.name) // reverse sort by User.name string field
@@ -665,9 +647,7 @@ struct User {
 	age  int
 	name string
 }
-
 mut users := [User{21, 'Bob'}, User{65, 'Bob'}, User{25, 'Alice'}]
-
 custom_sort_fn := fn (a &User, b &User) int {
 	// return -1 when a comes before b
 	// return 0, when both are in same order
@@ -758,6 +738,7 @@ b[0] = 7 // NB: `b[0]` is NOT referring to `a[2]`, as it would have been, withou
 println(a) // [0, 1, 2, 3, 4, 5]
 println(b) // [7, 3]
 ```
+
 #### Slices with negative indexes
 
 V supports array and string slices with negative indexes.
@@ -774,7 +755,6 @@ println(a#[-3..]) // [7, 8, 9]
 println(a#[-20..]) // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 println(a#[-20..-8]) // [0, 1]
 println(a#[..-3]) // [0, 1, 2, 3, 4, 5, 6]
-
 // empty arrays
 println(a#[-20..-10]) // []
 println(a#[20..10]) // []
@@ -812,9 +792,7 @@ fnums[1] = 10
 fnums[2] = 100
 println(fnums) // => [1, 10, 100]
 println(typeof(fnums).name) // => [3]int
-
 fnums2 := [1, 10, 100]! // short init syntax that does the same (the syntax will probably change)
-
 anums := fnums[..] // same as `anums := fnums[0..fnums.len]`
 println(anums) // => [1, 10, 100]
 println(typeof(anums).name) // => []int
@@ -876,7 +854,7 @@ m := {
 	'abc': 'def'
 }
 if v := m['abc'] {
-	println('the map value for that key is: $v')
+	println('the map value for that key is: ${v}')
 }
 ```
 
@@ -888,9 +866,24 @@ large_index := 999
 val := arr[large_index] or { panic('out of bounds') }
 println(val)
 // you can also do this, if you want to *propagate* the access error:
-val2 := arr[333]?
+val2 := arr[333]!
 println(val2)
+```
+
+V also supports nested maps:
+```v
+mut m := map[string]map[string]int{}
+m['greet'] = {
+	'Hello': 1
+}
+m['place'] = {
+	'world': 2
+}
+m['code']['orange'] = 123
+print(m)
 ```
 
 Maps are ordered by insertion, like dictionaries in Python. The order is a
 guaranteed language feature. This may change in the future.
+
+See all methods of [map](https://modules.vlang.io/index.html#map) and [maps](https://modules.vlang.io/maps.html).
