@@ -1,5 +1,5 @@
 ---
-sidebar_position: 27
+sidebar_position: 26
 ---
 
 # Tools
@@ -17,6 +17,7 @@ It's recommended to set up your editor, so that `v fmt -w` runs on every save.
 A vfmt run is usually pretty cheap (takes <30ms).
 
 Always run `v fmt -w file.v` before pushing your code.
+
 ## v shader
 
 You can use GPU shaders with V graphical apps. You write your shaders in an
@@ -47,7 +48,6 @@ You can sort on column 3 (average time per function) using:
 You can also use stopwatches to measure just portions of your code explicitly:
 ```v
 import time
-
 fn main() {
 	sw := time.new_stopwatch()
 	println('Hello world')

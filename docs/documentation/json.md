@@ -1,5 +1,5 @@
 ---
-sidebar_position: 22
+sidebar_position: 21
 ---
 
 # JSON
@@ -13,11 +13,9 @@ No runtime reflection is used. This results in much better performance.
 
 ```v
 import json
-
 struct Foo {
 	x int
 }
-
 struct User {
 	// Adding a [required] attribute will make decoding fail, if that
 	// field is not present in the input.
@@ -31,10 +29,9 @@ struct User {
 	// If the field name is different in JSON, it can be specified
 	last_name string [json: lastName]
 }
-
 data := '{ "name": "Frodo", "lastName": "Baggins", "age": 25 }'
 user := json.decode(User, data) or {
-	eprintln('Failed to decode json, error: $err')
+	eprintln('Failed to decode json, error: ${err}')
 	return
 }
 println(user.name)
@@ -55,21 +52,17 @@ the second is a string containing the JSON data.
 
 ```v
 import json
-
 struct User {
 	name  string
 	score i64
 }
-
 mut data := map[string]int{}
 user := &User{
 	name: 'Pierre'
 	score: 1024
 }
-
 data['x'] = 42
 data['y'] = 360
-
 println(json.encode(data)) // {"x":42,"y":360}
 println(json.encode(user)) // {"name":"Pierre","score":1024}
 ```

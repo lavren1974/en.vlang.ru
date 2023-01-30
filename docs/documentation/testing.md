@@ -1,5 +1,5 @@
 ---
-sidebar_position: 23
+sidebar_position: 22
 ---
 
 # Testing
@@ -10,7 +10,6 @@ sidebar_position: 23
 fn foo(mut v []int) {
 	v[0] = 1
 }
-
 mut v := [20]
 foo(mut v)
 assert v[0] < 4
@@ -33,10 +32,11 @@ strings that interpolate variables, etc.
 ```v
 fn test_assertion_with_extra_message_failure() {
 	for i in 0 .. 100 {
-		assert i * 2 - 45 < 75 + 10, 'assertion failed for i: $i'
+		assert i * 2 - 45 < 75 + 10, 'assertion failed for i: ${i}'
 	}
 }
 ```
+
 ## Asserts that do not abort your program
 When initially prototyping functionality and tests, it is sometimes desirable to
 have asserts, that do not stop the program, but just print their failures. That can
@@ -62,7 +62,7 @@ assert_continues_example.v:3: FAIL: fn main.abc: assert ii == 2
 assert_continues_example.v:3: FAIL: fn main.abc: assert ii == 2
    left value: ii = 3
   right value: 2
-```			   
+```
 
 Note: V also supports a command line flag `-assert continues`, which will change the
 behaviour of all asserts globally, as if you had tagged every function with `[assert_continues]`.
@@ -72,11 +72,9 @@ behaviour of all asserts globally, as if you had tagged every function with `[as
 ```v
 // hello.v
 module main
-
 fn hello() string {
 	return 'Hello world'
 }
-
 fn main() {
 	println(hello())
 }
@@ -85,7 +83,6 @@ fn main() {
 ```v failcompile
 // hello_test.v
 module main
-
 fn test_hello() {
 	assert hello() == 'Hello world'
 }
@@ -119,13 +116,13 @@ If a test function has an error return type, any propagated errors will fail the
 
 ```v
 import strconv
-
 fn test_atoi() ? {
 	assert strconv.atoi('1')? == 1
 	assert strconv.atoi('one')? == 1 // test will fail
 }
 ```
-### Running tests
+
+## Running tests
 
 To run test functions in an individual test file, use `v foo_test.v`.
 
@@ -144,7 +141,6 @@ NB: the path to the V compiler, is available through @VEXE, so a _test.v
 file, can easily run *other* test files like this:
 ```v oksyntax
 import os
-
 fn test_subtest() {
 	res := os.execute('${os.quoted_path(@VEXE)} other_test.v')
 	assert res.exit_code == 1

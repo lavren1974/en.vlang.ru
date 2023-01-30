@@ -1,5 +1,5 @@
 ---
-sidebar_position: 24
+sidebar_position: 23
 ---
 
 # Memory management
@@ -22,7 +22,6 @@ data types:
 
 ```v
 struct MyType {}
-
 [unsafe]
 fn (data &MyType) free() {
 	// ...
@@ -36,7 +35,7 @@ Autofree can be enabled with an `-autofree` flag.
 
 For developers willing to have more low level control, autofree can be disabled with
 `-manualfree`, or by adding a `[manualfree]` on each function that wants manage its
-memory manually. (See [attributes](../advanced/attributes.md)).
+memory manually. (See [attributes](#attributes)).
 
 
 Note 2: Autofree is still WIP. Until it stabilises and becomes the default, please
@@ -47,17 +46,15 @@ until V's autofree engine is production ready.
 
 ```v
 import strings
-
 fn draw_text(s string, x int, y int) {
 	// ...
 }
-
 fn draw_scene() {
 	// ...
 	name1 := 'abc'
 	name2 := 'def ghi'
-	draw_text('hello $name1', 10, 10)
-	draw_text('hello $name2', 100, 10)
+	draw_text('hello ${name1}', 10, 10)
+	draw_text('hello ${name2}', 100, 10)
 	draw_text(strings.repeat(`X`, 10000), 10, 50)
 	// ...
 }
@@ -73,7 +70,6 @@ These two strings are small, so V will use a preallocated buffer for them.
 struct User {
 	name string
 }
-
 fn test() []int {
 	number := 7 // stack variable
 	user := User{} // struct allocated on stack
@@ -113,16 +109,13 @@ but allocates them on the heap when obviously necessary. Example:
 struct MyStruct {
 	n int
 }
-
 struct RefStruct {
 	r &MyStruct
 }
-
 fn main() {
 	q, w := f()
-	println('q: $q.r.n, w: $w.n')
+	println('q: ${q.r.n}, w: ${w.n}')
 }
-
 fn f() (RefStruct, &MyStruct) {
 	a := MyStruct{
 		n: 1
@@ -137,7 +130,7 @@ fn f() (RefStruct, &MyStruct) {
 		r: &b
 	}
 	x := a.n + c.n
-	println('x: $x')
+	println('x: ${x}')
 	return e, &c
 }
 ```
@@ -153,7 +146,6 @@ struct MyStruct {
 mut:
 	n int
 }
-
 fn main() {
 	mut q := MyStruct{
 		n: 7
@@ -162,9 +154,8 @@ fn main() {
 		n: 13
 	}
 	x := q.f(&w) // references of `q` and `w` are passed
-	println('q: $q\nx: $x')
+	println('q: ${q}\nx: ${x}')
 }
-
 fn (mut a MyStruct) f(b &MyStruct) int {
 	a.n += b.n
 	x := a.n * b.n
@@ -192,29 +183,25 @@ struct RefStruct {
 mut:
 	r &MyStruct
 }
-
 // see discussion below
 [heap]
 struct MyStruct {
 	n int
 }
-
 fn main() {
 	m := MyStruct{}
 	mut r := RefStruct{
 		r: &m
 	}
 	r.g()
-	println('r: $r')
+	println('r: ${r}')
 }
-
 fn (mut r RefStruct) g() {
 	s := MyStruct{
 		n: 7
 	}
 	r.f(&s) // reference to `s` inside `r` is passed back to `main() `
 }
-
 fn (mut r RefStruct) f(s &MyStruct) {
 	r.r = s // would trigger error without `[heap]`
 }
@@ -227,7 +214,7 @@ the compiler would complain about the assignment in `f()` because `s` *"might
 refer to an object stored on stack"*. The assumption made in `g()` that the call
 `r.f(&s)` would only borrow the reference to `s` is wrong.
 
-A solution to this dilemma is the `[heap]` attribute at the declaration of
+A solution to this dilemma is the `[heap]` [attribute](#attributes) at the declaration of
 `struct MyStruct`. It instructs the compiler to *always* allocate `MyStruct`-objects
 on the heap. This way the reference to `s` remains valid even after `g()` returns.
 The compiler takes into consideration that `MyStruct` objects are always heap
@@ -256,15 +243,12 @@ struct MyStruct {
 mut:
 	n int
 }
-
 fn (mut a MyStruct) f() {
 	// do something with `a`
 }
-
 fn (mut a MyStruct) g() {
 	// do something else with `a`
 }
-
 fn main() {
 	x := MyStruct{} // stack allocated
 	mut y := x
@@ -287,20 +271,17 @@ approach is not recommended but shown here for the sake of completeness:
 struct MyStruct {
 	n int
 }
-
 struct RefStruct {
 mut:
 	r &MyStruct
 }
-
 // simple function - just to overwrite stack segment previously used by `g()`
 fn use_stack() {
 	x := 7.5
 	y := 3.25
 	z := x + y
-	println('$x $y $z')
+	println('${x} ${y} ${z}')
 }
-
 fn main() {
 	m := MyStruct{}
 	mut r := RefStruct{
@@ -308,9 +289,8 @@ fn main() {
 	}
 	r.g()
 	use_stack() // to erase invalid stack contents
-	println('r: $r')
+	println('r: ${r}')
 }
-
 fn (mut r RefStruct) g() {
 	s := &MyStruct{ // `s` explicitly refers to a heap object
 		n: 7
@@ -319,7 +299,6 @@ fn (mut r RefStruct) g() {
 	// to see data in stack segment being overwritten
 	r.f(s)
 }
-
 fn (mut r RefStruct) f(s &MyStruct) {
 	r.r = unsafe { s } // override compiler check
 }

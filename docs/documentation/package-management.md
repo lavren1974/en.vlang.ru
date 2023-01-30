@@ -1,5 +1,5 @@
 ---
-sidebar_position: 28
+sidebar_position: 27
 ---
 
 # Package management
@@ -8,7 +8,7 @@ A V *module* is a single folder with .v files inside. A V *package* can
 contain one or more V modules. A V *package* should have a `v.mod` file
 at its top folder, describing the contents of the package.
 
-V packages are installed normally in your `~/.vmodules` folder. That 
+V packages are installed normally in your `~/.vmodules` folder. That
 location can be overriden by setting the env variable `VMODULES`.
 
 ## Package commands
@@ -21,7 +21,6 @@ v [package_command] [param]
 ```
 
 where a package command can be one of:
-
 ```
    install           Install a package from VPM.
    remove            Remove a package that was installed from VPM.
@@ -81,7 +80,7 @@ Or you can update all your packages:
 v update
 ```
 
-To see all the modules you have installed, you can use:
+To see all the packages you have installed, you can use:
 
 ```powershell
 v list
@@ -94,20 +93,20 @@ Installed packages:
   ui
 ```
 
-To see all the modules that need updates:
+To see all the packages that need updates:
 ```powershell
 v outdated
 ```
 **Example:**
 ```powershell
 > v outdated
-Modules are up to date.
+Package are up to date.
 ```
 
 ## Publish package
 
 1. Put a `v.mod` file inside the toplevel folder of your package (if you
-	created your package with the command `v new mypackage` or `v init` 
+	created your package with the command `v new mypackage` or `v init`
 	you already have a `v.mod` file).
 
 	```sh
@@ -136,11 +135,10 @@ Modules are up to date.
 	mypackage.v
 	```
 
-	The name of your module should be used with the `module` directive
-	at the top of all files in your module. For `mymodule.v`:
+	The name of your package should be used with the `module` directive
+	at the top of all files in your package. For `mypackage.v`:
 	```v
 	module mypackage
-
 	pub fn hello_world() {
 		println('Hello World!')
 	}

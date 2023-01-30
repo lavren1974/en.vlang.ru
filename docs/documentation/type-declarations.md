@@ -4,235 +4,108 @@ sidebar_position: 19
 
 # Type Declarations
 
-## Interfaces
+## Type aliases
+
+To define a new type `NewType` as an alias for `ExistingType`,
+do `type NewType = ExistingType`.<br/>
+This is a special case of a [sum type](#sum-types) declaration.
+
+## Enums
+
 ```v
-// interface-example.1
-struct Dog {
-	breed string
+enum Color as u8 {
+	red
+	green
+	blue
 }
-
-fn (d Dog) speak() string {
-	return 'woof'
-}
-
-struct Cat {
-	breed string
-}
-
-fn (c Cat) speak() string {
-	return 'meow'
-}
-
-// unlike Go and like TypeScript, V's interfaces can define fields, not just methods.
-interface Speaker {
-	breed string
-	speak() string
-}
-
-fn main() {
-	dog := Dog{'Leonberger'}
-	cat := Cat{'Siamese'}
-
-	mut arr := []Speaker{}
-	arr << dog
-	arr << cat
-	for item in arr {
-		println('a $item.breed says: $item.speak()')
-	}
+mut color := Color.red
+// V knows that `color` is a `Color`. No need to use `color = Color.green` here.
+color = .green
+println(color) // "green"
+match color {
+	.red { println('the color was red') }
+	.green { println('the color was green') }
+	.blue { println('the color was blue') }
 }
 ```
 
-### Implement an interface
+The enum type can be any integer type, but can be ommited, if it is `int`: `enum Color {`.
 
-A type implements an interface by implementing its methods and fields.
-There is no explicit declaration of intent, no "implements" keyword.
+Enum match must be exhaustive or have an `else` branch.
+This ensures that if a new enum field is added, it's handled everywhere in the code.
 
-An interface can have a `mut:` section. Implementing types will need
-to have a `mut` receiver, for methods declared in the `mut:` section
-of an interface.
-```v
-// interface-example.2
-module main
-
-pub interface Foo {
-	write(string) string
-}
-
-// => the method signature of a type, implementing interface Foo should be:
-// `pub fn (s Type) write(a string) string`
-
-pub interface Bar {
-mut:
-	write(string) string
-}
-
-// => the method signature of a type, implementing interface Bar should be:
-// `pub fn (mut s Type) write(a string) string`
-
-struct MyStruct {}
-
-// MyStruct implements the interface Foo, but *not* interface Bar
-pub fn (s MyStruct) write(a string) string {
-	return a
-}
-
-fn main() {
-	s1 := MyStruct{}
-	fn1(s1)
-	// fn2(s1) -> compile error, since MyStruct does not implement Bar
-}
-
-fn fn1(s Foo) {
-	println(s.write('Foo'))
-}
-
-// fn fn2(s Bar) { // does not match
-//      println(s.write('Foo'))
-// }
-```
-
-### Casting an interface
-
-We can test the underlying type of an interface using dynamic cast operators:
-```v oksyntax
-// interface-exmaple.3 (continued from interface-exampe.1)
-interface Something {}
-
-fn announce(s Something) {
-	if s is Dog {
-		println('a $s.breed dog') // `s` is automatically cast to `Dog` (smart cast)
-	} else if s is Cat {
-		println('a cat speaks $s.speak()')
-	} else {
-		println('something else')
-	}
-}
-
-fn main() {
-	dog := Dog{'Leonberger'}
-	cat := Cat{'Siamese'}
-	announce(dog)
-	announce(cat)
-}
-```
+Enum fields cannot re-use reserved keywords. However, reserved keywords may be escaped
+with an @.
 
 ```v
-// interface-example.4
-interface IFoo {
-	foo()
+enum Color {
+	@none
+	red
+	green
+	blue
 }
+color := Color.@none
+println(color)
+```
 
-interface IBar {
-	bar()
+Integers may be assigned to enum fields.
+
+```v
+enum Grocery {
+	apple
+	orange = 5
+	pear
 }
+g1 := int(Grocery.apple)
+g2 := int(Grocery.orange)
+g3 := int(Grocery.pear)
+println('Grocery IDs: ${g1}, ${g2}, ${g3}')
+```
 
-// implements only IFoo
-struct SFoo {}
+Output: `Grocery IDs: 0, 5, 6`.
 
-fn (sf SFoo) foo() {}
+Operations are not allowed on enum variables; they must be explicitly cast to `int`.
 
-// implements both IFoo and IBar
-struct SFooBar {}
+Enums can have methods, just like structs.
 
-fn (sfb SFooBar) foo() {}
-
-fn (sfb SFooBar) bar() {
-	dump('This implements IBar')
+```v
+enum Cycle {
+	one
+	two
+	three
 }
-
-fn main() {
-	mut arr := []IFoo{}
-	arr << SFoo{}
-	arr << SFooBar{}
-
-	for a in arr {
-		dump(a)
-		// In order to execute instances that implements IBar.
-		if a is IBar {
-			// a.bar() // Error.
-			b := a as IBar
-			dump(b)
-			b.bar()
+fn (c Cycle) next() Cycle {
+	match c {
+		.one {
+			return .two
+		}
+		.two {
+			return .three
+		}
+		.three {
+			return .one
 		}
 	}
 }
-```
-
-For more information, see [Dynamic casts](#dynamic-casts).
-### Interface method definitions
-
-Also unlike Go, an interface can have it's own methods, similar to how
-structs can have their methods. These 'interface methods' do not have
-to be implemented, by structs which implement that interface.
-They are just a convenient way to write `i.some_function()` instead of
-`some_function(i)`, similar to how struct methods can be looked at, as
-a convenience for writing `s.xyz()` instead of `xyz(s)`.
-
-N.B. This feature is NOT a "default implementation" like in C#.
-
-For example, if a struct `cat` is wrapped in an interface `a`, that has
-implemented a method with the same name `speak`, as a method implemented by
-the struct, and you do `a.speak()`, *only* the interface method is called:
-
-```v
-interface Adoptable {}
-
-fn (a Adoptable) speak() string {
-	return 'adopt me!'
-}
-
-struct Cat {}
-
-fn (c Cat) speak() string {
-	return 'meow!'
-}
-
-struct Dog {}
-
-fn main() {
-	cat := Cat{}
-	assert dump(cat.speak()) == 'meow!'
-	//
-	a := Adoptable(cat)
-	assert dump(a.speak()) == 'adopt me!' // call Adoptable's `speak`
-	if a is Cat {
-		// Inside this `if` however, V knows that `a` is not just any
-		// kind of Adoptable, but actually a Cat, so it will use the
-		// Cat `speak`, NOT the Adoptable `speak`:
-		dump(a.speak()) // meow!
-	}
-	//
-	b := Adoptable(Dog{})
-	assert dump(b.speak()) == 'adopt me!' // call Adoptable's `speak`
-	// if b is Dog {
-	// 	dump(b.speak()) // error: unknown method or field: Dog.speak
-	// }
+mut c := Cycle.one
+for _ in 0 .. 10 {
+	println(c)
+	c = c.next()
 }
 ```
 
-### Embedded interface
-
-Interfaces support embedding, just like structs:
-
-```v
-pub interface Reader {
-mut:
-	read(mut buf []byte) ?int
-}
-
-pub interface Writer {
-mut:
-	write(buf []byte) ?int
-}
-
-// ReaderWriter embeds both Reader and Writer.
-// The effect is the same as copy/pasting all of the
-// Reader and all of the Writer methods/fields into
-// ReaderWriter.
-pub interface ReaderWriter {
-	Reader
-	Writer
-}
+Output:
+```
+one
+two
+three
+one
+two
+three
+one
+two
+three
+one
 ```
 
 ## Function Types
@@ -249,7 +122,6 @@ argument of a function type:
 
 ```v
 type Filter = fn (string) string
-
 fn filter(s string, f Filter) string {
 	return f(s)
 }
@@ -262,7 +134,6 @@ a function type - they just have to be compatible:
 fn uppercase(s string) string {
 	return s.to_upper()
 }
-
 // now `uppercase` can be used everywhere where Filter is expected
 ```
 
@@ -303,106 +174,205 @@ println(filter('Hello world', fn (s string) string {
 You can see the complete
 [example here](https://github.com/vlang/v/tree/master/examples/function_types.v).
 
-## Enums
+## Interfaces
 
 ```v
-enum Color as u8 {
-	red
-	green
-	blue
+// interface-example.1
+struct Dog {
+	breed string
 }
-
-mut color := Color.red
-// V knows that `color` is a `Color`. No need to use `color = Color.green` here.
-color = .green
-println(color) // "green"
-match color {
-	.red { println('the color was red') }
-	.green { println('the color was green') }
-	.blue { println('the color was blue') }
+fn (d Dog) speak() string {
+	return 'woof'
+}
+struct Cat {
+	breed string
+}
+fn (c Cat) speak() string {
+	return 'meow'
+}
+// unlike Go and like TypeScript, V's interfaces can define fields, not just methods.
+interface Speaker {
+	breed string
+	speak() string
+}
+fn main() {
+	dog := Dog{'Leonberger'}
+	cat := Cat{'Siamese'}
+	mut arr := []Speaker{}
+	arr << dog
+	arr << cat
+	for item in arr {
+		println('a ${item.breed} says: ${item.speak()}')
+	}
 }
 ```
-The enum type can be any integer type, but can be ommited, if it is `int`: `enum Color {`.
 
-Enum match must be exhaustive or have an `else` branch.
-This ensures that if a new enum field is added, it's handled everywhere in the code.
+### Implement an interface
 
-Enum fields cannot re-use reserved keywords. However, reserved keywords may be escaped
-with an @.
+A type implements an interface by implementing its methods and fields.
+There is no explicit declaration of intent, no "implements" keyword.
 
+An interface can have a `mut:` section. Implementing types will need
+to have a `mut` receiver, for methods declared in the `mut:` section
+of an interface.
 ```v
-enum Color {
-	@none
-	red
-	green
-	blue
+// interface-example.2
+module main
+interface Foo {
+	write(string) string
 }
-
-color := Color.@none
-println(color)
+// => the method signature of a type, implementing interface Foo should be:
+// `fn (s Type) write(a string) string`
+interface Bar {
+mut:
+	write(string) string
+}
+// => the method signature of a type, implementing interface Bar should be:
+// `fn (mut s Type) write(a string) string`
+struct MyStruct {}
+// MyStruct implements the interface Foo, but *not* interface Bar
+fn (s MyStruct) write(a string) string {
+	return a
+}
+fn main() {
+	s1 := MyStruct{}
+	fn1(s1)
+	// fn2(s1) -> compile error, since MyStruct does not implement Bar
+}
+fn fn1(s Foo) {
+	println(s.write('Foo'))
+}
+// fn fn2(s Bar) { // does not match
+//      println(s.write('Foo'))
+// }
 ```
 
-Integers may be assigned to enum fields.
+### Casting an interface
 
-```v
-enum Grocery {
-	apple
-	orange = 5
-	pear
+We can test the underlying type of an interface using dynamic cast operators:
+```v oksyntax
+// interface-exmaple.3 (continued from interface-exampe.1)
+interface Something {}
+fn announce(s Something) {
+	if s is Dog {
+		println('a ${s.breed} dog') // `s` is automatically cast to `Dog` (smart cast)
+	} else if s is Cat {
+		println('a cat speaks ${s.speak()}')
+	} else {
+		println('something else')
+	}
 }
-
-g1 := int(Grocery.apple)
-g2 := int(Grocery.orange)
-g3 := int(Grocery.pear)
-println('Grocery IDs: $g1, $g2, $g3')
+fn main() {
+	dog := Dog{'Leonberger'}
+	cat := Cat{'Siamese'}
+	announce(dog)
+	announce(cat)
+}
 ```
 
-Output: `Grocery IDs: 0, 5, 6`.
-
-Operations are not allowed on enum variables; they must be explicitly cast to `int`.
-
-Enums can have methods, just like structs.
-
 ```v
-enum Cycle {
-	one
-	two
-	three
+// interface-example.4
+interface IFoo {
+	foo()
 }
-
-fn (c Cycle) next() Cycle {
-	match c {
-		.one {
-			return .two
-		}
-		.two {
-			return .three
-		}
-		.three {
-			return .one
+interface IBar {
+	bar()
+}
+// implements only IFoo
+struct SFoo {}
+fn (sf SFoo) foo() {}
+// implements both IFoo and IBar
+struct SFooBar {}
+fn (sfb SFooBar) foo() {}
+fn (sfb SFooBar) bar() {
+	dump('This implements IBar')
+}
+fn main() {
+	mut arr := []IFoo{}
+	arr << SFoo{}
+	arr << SFooBar{}
+	for a in arr {
+		dump(a)
+		// In order to execute instances that implements IBar.
+		if a is IBar {
+			// a.bar() // Error.
+			b := a as IBar
+			dump(b)
+			b.bar()
 		}
 	}
 }
+```
 
-mut c := Cycle.one
-for _ in 0 .. 10 {
-	println(c)
-	c = c.next()
+For more information, see [Dynamic casts](#dynamic-casts).
+
+### Interface method definitions
+
+Also unlike Go, an interface can have it's own methods, similar to how
+structs can have their methods. These 'interface methods' do not have
+to be implemented, by structs which implement that interface.
+They are just a convenient way to write `i.some_function()` instead of
+`some_function(i)`, similar to how struct methods can be looked at, as
+a convenience for writing `s.xyz()` instead of `xyz(s)`.
+
+N.B. This feature is NOT a "default implementation" like in C#.
+
+For example, if a struct `cat` is wrapped in an interface `a`, that has
+implemented a method with the same name `speak`, as a method implemented by
+the struct, and you do `a.speak()`, *only* the interface method is called:
+
+```v
+interface Adoptable {}
+fn (a Adoptable) speak() string {
+	return 'adopt me!'
+}
+struct Cat {}
+fn (c Cat) speak() string {
+	return 'meow!'
+}
+struct Dog {}
+fn main() {
+	cat := Cat{}
+	assert dump(cat.speak()) == 'meow!'
+	//
+	a := Adoptable(cat)
+	assert dump(a.speak()) == 'adopt me!' // call Adoptable's `speak`
+	if a is Cat {
+		// Inside this `if` however, V knows that `a` is not just any
+		// kind of Adoptable, but actually a Cat, so it will use the
+		// Cat `speak`, NOT the Adoptable `speak`:
+		dump(a.speak()) // meow!
+	}
+	//
+	b := Adoptable(Dog{})
+	assert dump(b.speak()) == 'adopt me!' // call Adoptable's `speak`
+	// if b is Dog {
+	// 	dump(b.speak()) // error: unknown method or field: Dog.speak
+	// }
 }
 ```
 
-Output:
-```
-one
-two
-three
-one
-two
-three
-one
-two
-three
-one
+### Embedded interface
+
+Interfaces support embedding, just like structs:
+
+```v
+pub interface Reader {
+mut:
+	read(mut buf []byte) ?int
+}
+pub interface Writer {
+mut:
+	write(buf []byte) ?int
+}
+// ReaderWriter embeds both Reader and Writer.
+// The effect is the same as copy/pasting all of the
+// Reader and all of the Writer methods/fields into
+// ReaderWriter.
+pub interface ReaderWriter {
+	Reader
+	Writer
+}
 ```
 
 ## Sum types
@@ -412,13 +382,9 @@ keyword to declare a sum type:
 
 ```v
 struct Moon {}
-
 struct Mars {}
-
 struct Venus {}
-
 type World = Mars | Moon | Venus
-
 sum := World(Moon{})
 assert sum.type_name() == 'Moon'
 println(sum)
@@ -430,15 +396,12 @@ With sum types you could build recursive structures and write concise but powerf
 ```v
 // V's binary tree
 struct Empty {}
-
 struct Node {
 	value f64
 	left  Tree
 	right Tree
 }
-
 type Tree = Empty | Node
-
 // sum up all node values
 fn sum(tree Tree) f64 {
 	return match tree {
@@ -446,7 +409,6 @@ fn sum(tree Tree) f64 {
 		Node { tree.value + sum(tree.left) + sum(tree.right) }
 	}
 }
-
 fn main() {
 	left := Node{0.2, Empty{}, Empty{}}
 	right := Node{0.3, Empty{}, Node{0.4, Empty{}, Empty{}}}
@@ -462,17 +424,12 @@ To cast a sum type to one of its variants you can use `sum as Type`:
 
 ```v
 struct Moon {}
-
 struct Mars {}
-
 struct Venus {}
-
 type World = Mars | Moon | Venus
-
 fn (m Mars) dust_storm() bool {
 	return true
 }
-
 fn main() {
 	mut w := World(Moon{})
 	assert w is Moon
@@ -513,24 +470,18 @@ if mut w is Mars {
 ```
 Otherwise `w` would keep its original type.
 > This works for both, simple variables and complex expressions like `user.name`
-
 ### Matching sum types
 
 You can also use `match` to determine the variant:
 
 ```v
 struct Moon {}
-
 struct Mars {}
-
 struct Venus {}
-
 type World = Mars | Moon | Venus
-
 fn open_parachutes(n int) {
 	println(n)
 }
-
 fn land(w World) {
 	match w {
 		Moon {} // no atmosphere
@@ -552,13 +503,10 @@ fn land(w World) {
 struct Moon {}
 struct Mars {}
 struct Venus {}
-
 type World = Moon | Mars | Venus
-
 fn (m Moon) moon_walk() {}
 fn (m Mars) shiver() {}
 fn (v Venus) sweat() {}
-
 fn pass_time(w World) {
     match w {
         // using the shadowed match variable, in this case `w` (smart cast)
@@ -568,11 +516,6 @@ fn pass_time(w World) {
     }
 }
 ```
-## Type aliases
-
-To define a new type `NewType` as an alias for `ExistingType`,
-do `type NewType = ExistingType`.<br/>
-This is a special case of a [sum type](#sum-types) declaration.
 
 ## Option/Result types and error handling
 
@@ -588,11 +531,9 @@ struct User {
 	id   int
 	name string
 }
-
 struct Repo {
 	users []User
 }
-
 fn (r Repo) find_user_by_id(id int) !User {
 	for user in r.users {
 		if user.id == id {
@@ -600,9 +541,8 @@ fn (r Repo) find_user_by_id(id int) !User {
 			return user
 		}
 	}
-	return error('User $id not found')
+	return error('User ${id} not found')
 }
-
 // A version of the function using an optional
 fn (r Repo) find_user_by_id2(id int) ?User {
 	for user in r.users {
@@ -612,7 +552,6 @@ fn (r Repo) find_user_by_id2(id int) ?User {
 	}
 	return none
 }
-
 fn main() {
 	repo := Repo{
 		users: [User{1, 'Andrew'}, User{2, 'Bob'}, User{10, 'Charles'}]
@@ -623,7 +562,6 @@ fn main() {
 	}
 	println(user.id) // "10"
 	println(user.name) // "Charles"
-
 	user2 := repo.find_user_by_id2(10) or { return }
 }
 ```
@@ -647,14 +585,13 @@ user := repo.find_user_by_id(7) or {
 }
 ```
 
-## Handling optionals/results
+### Handling optionals/results
 
 There are four ways of handling an optional/result. The first method is to
 propagate the error:
 
 ```v
 import net.http
-
 fn f(url string) !string {
 	resp := http.get(url)!
 	return resp.body
@@ -702,7 +639,6 @@ fn do_something(s string) !string {
 	}
 	return error('invalid string')
 }
-
 a := do_something('foo') or { 'default' } // a will be 'foo'
 b := do_something('bar') or { 'default' } // b will be 'default'
 println(a)
@@ -714,7 +650,6 @@ The fourth method is to use `if` unwrapping:
 
 ```v
 import net.http
-
 if resp := http.get('https://google.com') {
 	println(resp.body) // resp is a http.Response, not an optional
 } else {
@@ -723,3 +658,94 @@ if resp := http.get('https://google.com') {
 ```
 Above, `http.get` returns a `!http.Response`. `resp` is only in scope for the first
 `if` branch. `err` is only in scope for the `else` branch.
+
+
+## Custom error types
+
+V gives you the ability to define custom error types through the `IError` interface.
+The interface requires two methods: `msg() string` and `code() int`. Every type that
+implements these methods can be used as an error.
+
+When defining a custom error type it is recommended to embed the builtin `Error` default
+implementation. This provides an empty default implementation for both required methods,
+so you only have to implement what you really need, and may provide additional utility
+functions in the future.
+
+```v
+struct PathError {
+	Error
+	path string
+}
+fn (err PathError) msg() string {
+	return 'Failed to open path: ${err.path}'
+}
+fn try_open(path string) ? {
+	return IError(PathError{
+		path: path
+	})
+}
+fn main() {
+	try_open('/tmp') or { panic(err) }
+}
+```
+
+## Generics
+
+```v wip
+struct Repo<T> {
+    db DB
+}
+struct User {
+	id   int
+	name string
+}
+struct Post {
+	id   int
+	user_id int
+	title string
+	body string
+}
+fn new_repo<T>(db DB) Repo<T> {
+    return Repo<T>{db: db}
+}
+// This is a generic function. V will generate it for every type it's used with.
+fn (r Repo<T>) find_by_id(id int) ?T {
+    table_name := T.name // in this example getting the name of the type gives us the table name
+    return r.db.query_one<T>('select * from ${table_name} where id = ?', id)
+}
+db := new_db()
+users_repo := new_repo<User>(db) // returns Repo<User>
+posts_repo := new_repo<Post>(db) // returns Repo<Post>
+user := users_repo.find_by_id(1)? // find_by_id<User>
+post := posts_repo.find_by_id(1)? // find_by_id<Post>
+```
+
+Currently generic function definitions must declare their type parameters, but in
+future V will infer generic type parameters from single-letter type names in
+runtime parameter types. This is why `find_by_id` can omit `<T>`, because the
+receiver argument `r` uses a generic type `T`.
+
+Another example:
+```v
+fn compare[T](a T, b T) int {
+	if a < b {
+		return -1
+	}
+	if a > b {
+		return 1
+	}
+	return 0
+}
+// compare[int]
+println(compare(1, 0)) // Outputs: 1
+println(compare(1, 1)) //          0
+println(compare(1, 2)) //         -1
+// compare[string]
+println(compare('1', '0')) // Outputs: 1
+println(compare('1', '1')) //          0
+println(compare('1', '2')) //         -1
+// compare[f64]
+println(compare(1.1, 1.0)) // Outputs: 1
+println(compare(1.1, 1.1)) //          0
+println(compare(1.1, 1.2)) //         -1
+```

@@ -1,33 +1,32 @@
 ---
-sidebar_position: 21
+sidebar_position: 20
 ---
 
 # Concurrency
 ## Spawning Concurrent Tasks
 V's model of concurrency is going to be very similar to Go's.
-For now, `go foo()` runs `foo()` concurrently in a different thread:
+For now, `spawn foo()` runs `foo()` concurrently in a different thread:
 
 ```v
 import math
-
 fn p(a f64, b f64) { // ordinary function without return value
 	c := math.sqrt(a * a + b * b)
 	println(c)
 }
-
 fn main() {
-	go p(3, 4)
+	spawn p(3, 4)
 	// p will be run in parallel thread
 	// It can also be written as follows
-	// go fn (a f64, b f64) {
+	// spawn fn (a f64, b f64) {
 	//	c := math.sqrt(a * a + b * b)
 	//	println(c)
 	// }(3, 4)
 }
 ```
 
-> In V 0.4 `go foo()` will be automatically renamed via vfmt to `spawn foo()`,
-and there will be a way to launch a coroutine (a lightweight thread managed by the runtime).
+There's also a `go` keyword. Right now `go foo()` will be automatically renamed via vfmt 
+to `spawn foo()`, and there will be a way to launch a coroutine with `go` (a lightweight
+thread managed by the runtime).
 
 Sometimes it is necessary to wait until a parallel thread has finished. This can
 be done by assigning a *handle* to the started thread and calling the `wait()` method
@@ -35,14 +34,12 @@ to this handle later:
 
 ```v
 import math
-
 fn p(a f64, b f64) { // ordinary function without return value
 	c := math.sqrt(a * a + b * b)
 	println(c) // prints `5`
 }
-
 fn main() {
-	h := go p(3, 4)
+	h := spawn p(3, 4)
 	// p() runs in parallel thread
 	h.wait()
 	// p() has definitely finished
@@ -55,17 +52,15 @@ concurrently.
 
 ```v
 import math { sqrt }
-
 fn get_hypot(a f64, b f64) f64 { //       ordinary function returning a value
 	c := sqrt(a * a + b * b)
 	return c
 }
-
 fn main() {
-	g := go get_hypot(54.06, 2.08) // spawn thread and get handle to it
+	g := spawn get_hypot(54.06, 2.08) // spawn thread and get handle to it
 	h1 := get_hypot(2.32, 16.74) //   do some other calculation here
 	h2 := g.wait() //                 get result from spawned thread
-	println('Results: $h1, $h2') //   prints `Results: 16.9, 54.1`
+	println('Results: ${h1}, ${h2}') //   prints `Results: 16.9, 54.1`
 }
 ```
 
@@ -74,22 +69,19 @@ using an array of threads.
 
 ```v
 import time
-
 fn task(id int, duration int) {
-	println('task $id begin')
+	println('task ${id} begin')
 	time.sleep(duration * time.millisecond)
-	println('task $id end')
+	println('task ${id} end')
 }
-
 fn main() {
 	mut threads := []thread{}
-	threads << go task(1, 500)
-	threads << go task(2, 900)
-	threads << go task(3, 100)
+	threads << spawn task(1, 500)
+	threads << spawn task(2, 900)
+	threads << spawn task(3, 100)
 	threads.wait()
 	println('done')
 }
-
 // Output:
 // task 1 begin
 // task 2 begin
@@ -107,17 +99,15 @@ on the thread array will return all computed values.
 fn expensive_computing(i int) int {
 	return i * i
 }
-
 fn main() {
 	mut threads := []thread int{}
 	for i in 1 .. 10 {
-		threads << go expensive_computing(i)
+		threads << spawn expensive_computing(i)
 	}
 	// Join all tasks
 	r := threads.wait()
-	println('All jobs finished: $r')
+	println('All jobs finished: ${r}')
 }
-
 // Output: All jobs finished: [1, 4, 9, 16, 25, 36, 49, 64, 81]
 ```
 
@@ -143,10 +133,9 @@ variables:
 fn f(ch chan int) {
 	// ...
 }
-
 fn main() {
 	ch := chan int{}
-	go f(ch)
+	spawn f(ch)
 	// ...
 }
 ```
@@ -171,7 +160,7 @@ A channel can be closed to indicate that no further objects can be pushed. Any a
 to do so will then result in a runtime panic (with the exception of `select` and
 `try_push()` - see below). Attempts to pop will return immediately if the
 associated channel has been closed and the buffer is empty. This situation can be
-handled using an `or {}` block (see [Handling optionals/results](./type-declarations.md#handling-optionalsresults)).
+handled using an `or {}` block (see [Handling optionals/results](#handling-optionalsresults)).
 
 ```v wip
 ch := chan int{}
@@ -182,50 +171,48 @@ ch.close()
 m := <-ch or {
     println('channel has been closed')
 }
-
 // propagate error
 y := <-ch2 ?
 ```
+
 ### Channel Select
 
 The `select` command allows monitoring several channels at the same time
 without noticeable CPU load.  It consists of a list of possible transfers and associated branches
-of statements - similar to the [match](./statements-expressions.md#match) command:
+of statements - similar to the [match](#match) command:
 ```v
 import time
-
 fn main() {
 	ch := chan f64{}
 	ch2 := chan f64{}
 	ch3 := chan f64{}
 	mut b := 0.0
 	c := 1.0
-	// ... setup go threads that will send on ch/ch2
-	go fn (the_channel chan f64) {
+	// ... setup spawn threads that will send on ch/ch2
+	spawn fn (the_channel chan f64) {
 		time.sleep(5 * time.millisecond)
 		the_channel <- 1.0
 	}(ch)
-	go fn (the_channel chan f64) {
+	spawn fn (the_channel chan f64) {
 		time.sleep(1 * time.millisecond)
 		the_channel <- 1.0
 	}(ch2)
-	go fn (the_channel chan f64) {
+	spawn fn (the_channel chan f64) {
 		_ := <-the_channel
 	}(ch3)
-
 	select {
 		a := <-ch {
 			// do something with `a`
-			eprintln('> a: $a')
+			eprintln('> a: ${a}')
 		}
 		b = <-ch2 {
 			// do something with predeclared variable `b`
-			eprintln('> b: $b')
+			eprintln('> b: ${b}')
 		}
 		ch3 <- c {
 			// do something if `c` was sent
 			time.sleep(5 * time.millisecond)
-			eprintln('> c: $c was send on channel ch3')
+			eprintln('> c: ${c} was send on channel ch3')
 		}
 		500 * time.millisecond {
 			// do something if no channel has become ready within 0.5s
@@ -261,7 +248,6 @@ For special purposes there are some builtin fields and methods:
 struct Abc {
 	x int
 }
-
 a := 2.13
 ch := chan f64{}
 res := ch.try_push(a) // try to perform `ch <- a`
@@ -297,18 +283,16 @@ struct St {
 mut:
 	x int // data to be shared
 }
-
 fn (shared b St) g() {
 	lock b {
 		// read/modify/write b.x
 	}
 }
-
 fn main() {
 	shared a := St{
 		x: 10
 	}
-	go a.g()
+	spawn a.g()
 	// ...
 	rlock a {
 		// read a.x

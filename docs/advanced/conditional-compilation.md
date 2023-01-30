@@ -1,8 +1,65 @@
 ---
-sidebar_position: 9
+sidebar_position: 2
 ---
 
 # Conditional compilation
+
+## Compile time pseudo variables
+
+V also gives your code access to a set of pseudo string variables,
+that are substituted at compile time:
+
+- `@FN` => replaced with the name of the current V function
+- `@METHOD` => replaced with ReceiverType.MethodName
+- `@MOD` => replaced with the name of the current V module
+- `@STRUCT` => replaced with the name of the current V struct
+- `@FILE` => replaced with the absolute path of the V source file
+- `@LINE` => replaced with the V line number where it appears (as a string).
+- `@FILE_LINE` => like `@FILE:@LINE`, but the file part is a relative path
+- `@COLUMN` => replaced with the column where it appears (as a string).
+- `@VEXE` => replaced with the path to the V compiler
+- `@VEXEROOT`  => will be substituted with the *folder*,
+   where the V executable is (as a string).
+- `@VHASH`  => replaced with the shortened commit hash of the V compiler (as a string).
+- `@VMOD_FILE` => replaced with the contents of the nearest v.mod file (as a string).
+- `@VMODROOT` => will be substituted with the *folder*,
+   where the nearest v.mod file is (as a string).
+
+That allows you to do the following example, useful while debugging/logging/tracing your code:
+```v
+eprintln('file: ' + @FILE + ' | line: ' + @LINE + ' | fn: ' + @MOD + '.' + @FN)
+```
+
+Another example, is if you want to embed the version/name from v.mod *inside* your executable:
+```v ignore
+import v.vmod
+vm := vmod.decode( @VMOD_FILE ) or { panic(err) }
+eprintln('${vm.name} ${vm.version}\n ${vm.description}')
+```
+
+## Compile-time reflection
+
+Having built-in JSON support is nice, but V also allows you to create efficient
+serializers for any data format. V has compile-time `if` and `for` constructs:
+
+```v
+struct User {
+	name string
+	age  int
+}
+fn main() {
+	$for field in User.fields {
+		$if field.typ is string {
+			println('${field.name} is of type string')
+		}
+	}
+}
+// Output:
+// name is of type string
+```
+
+See [`examples/compiletime/reflection.v`](/examples/compiletime/reflection.v)
+for a more complete example.
 
 ## Compile time code
 
@@ -20,7 +77,7 @@ fn main() {
 	}
 	// Usage as expression
 	os := $if windows { 'Windows' } $else { 'UNIX' }
-	println('Using $os')
+	println('Using ${os}')
 	// $else-$if branches
 	$if tinyc {
 		println('tinyc')
@@ -65,6 +122,7 @@ Full list of builtin options:
 | `solaris` | | | |
 
 ### `$embed_file`
+
 ```v ignore
 import os
 fn main() {
@@ -97,6 +155,8 @@ fn main() {
 }
 ```
 
+`$embed_file` returns [EmbedFileData](https://modules.vlang.io/v.embed_file.html#EmbedFileData) which could be used to obtain the file contents as `string` or `[]u8`.
+
 ### `$tmpl` for embedding and parsing V template files
 
 V has a simple template language for text and html templates, and they can easily
@@ -110,7 +170,6 @@ fn build() string {
 	numbers := [1, 2, 3]
 	return $tmpl('1.txt')
 }
-
 fn main() {
 	println(build())
 }
@@ -120,11 +179,8 @@ fn main() {
 
 ```
 name: @name
-
 age: @age
-
 numbers: @numbers
-
 @for number in numbers
   @number
 @end
@@ -134,11 +190,8 @@ output:
 
 ```
 name: Peter
-
 age: 25
-
 numbers: [1, 2, 3]
-
 1
 2
 3
@@ -150,7 +203,6 @@ See more [details](https://github.com/vlang/v/blob/master/vlib/v/TEMPLATES.md)
 
 ```v
 module main
-
 fn main() {
 	compile_time_env := $env('ENV_VAR')
 	println(compile_time_env)
@@ -171,14 +223,11 @@ Both receive as their only argument a string literal that contains the message t
 ```v failcompile nofmt
 // x.v
 module main
-
 $if linux {
     $compile_error('Linux is not supported')
 }
-
 fn main() {
 }
-
 $ v run x.v
 x.v:4:5: error: Linux is not supported
     2 |
@@ -246,3 +295,6 @@ conditional blocks inside it, i.e. `$if linux {}` etc.
 
 - `_notd_customflag.v` => similar to _d_customflag.v, but will be used
 *only* if you do NOT pass `-d customflag` to V.
+
+See also [Cross Compilation](#cross-compilation).
+

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 4
 ---
 
 # Structs with reference fields
@@ -17,7 +17,6 @@ struct Node {
 	a &Node
 	b &Node = 0 // Auto-initialized to nil, use with caution!
 }
-
 // Reference fields must be initialized unless an initial value is declared.
 // Zero (0) is OK but use with caution, it's a nil pointer.
 foo := Node{
